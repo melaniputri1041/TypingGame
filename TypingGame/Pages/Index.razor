@@ -1,0 +1,136 @@
+﻿@page "/"
+@using TypingGame.Models; @*berfungsi untuk menghubungkan antara class stats dan index*@
+
+<style>
+	.game-text{
+		font-size : 72px;
+		font-weight : bold;
+		margin-right: 4px;
+	}
+
+	.correct{
+		color : green; 
+		/*berfungsi untuk membuat warna di yang benar*/
+	}
+	.wrong{
+		color: red;
+		/*berfungsi untuk membuat warna di yang salah*/
+	}
+</style>
+
+
+@*onkeydown akan fokus jika kita fokus pada browsernya*@
+<div @ref="parentDiv" @onkeydown="OnType" tabindex="0">
+	@*berfungsi juika kita akan mengetik*@
+	<div class="row">
+		<div class="col-12">
+			<div class="card">
+				<div class="card-body">
+					@for( var ch = 0; ch < generatedChar.Length; ch++)
+					{
+						<span class="game-text @status[ch]">
+							@generatedChar[ch]
+						</span>
+					}
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<div class="row">
+		<div class="col-12">
+			<div class="card">
+				<div class="card-body">
+					<span>Correct: @stats.Correct </span>
+					<span>Missed: @stats.Missed </span>
+					<span>Total: @stats.Total </span>
+					<span>Accuracy: @stats.Accuracy % </span>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+
+@code{
+	string alphabet = "QWERTYUIOPLKJHGDDSAZXCVBNM";
+	char[] generatedChar = new char[7]; // membuat array batas huruf 7
+	string[] status = new string[7];
+
+	Random random = new Random();
+
+	stats stats;
+
+	public ElementReference parentDiv;
+
+	protected override async Task OnAfterRenderAsync(bool firtsRender)
+	{
+		if (firtsRender)
+		{
+			await parentDiv.FocusAsync();
+			//await berfungsi untuk menunggu proses
+		}
+	}
+
+	private void SetUpGame()
+	{
+		stats = new stats();
+		stats.Correct = 0;
+		stats.Missed = 0;
+		stats.Total = 0;
+		stats.Accuracy = 0;
+		//stats yang di atas berfungsi untuk membuat semua bermulai dari angka 0
+		for (int i =0;i<7;i++) // untuk mengisi huruf 
+		{
+			generatedChar[i] = alphabet[random.Next(alphabet.Length)];
+
+		}
+
+
+	}
+
+	protected override void OnInitialized()
+	{
+		SetUpGame();
+	}
+
+	int cursor = 0; // berfungsi untuk memulai cursor dari 0 atrau array ke 0
+	public void OnType(KeyboardEventArgs e)
+	{
+		if (e.Key == generatedChar[cursor].ToString().ToLower())//ini berfungsi jika kondisi benar
+		{
+			stats.Correct++;//huruf bertambah
+			status[cursor] = "correct";
+			cursor++;//berfungsi untuk cursor maju	
+
+		}
+		else
+		{
+			stats.Missed++;
+			status[cursor] = "wrong";
+			if (stats.Missed >= 6) //berfungsi untuk mengulang jika salah sudah 5 kali
+			{
+				status = new string[7];
+				cursor = 0; // ini berfungsi untuk mengubah cursor menjadi 0 kembali jika sudah 5 kali salah
+				SetUpGame();
+			}
+		}
+
+		if (cursor >= 7) // berfungsi jika kondisi kata sudah benar semua
+		{
+			status = new string[7];
+			cursor = 0; // jika kondisi benar sudah 7 maka cursor akan kembali ke 0 tetapi jumlah nya akan terus bertambah
+			GenerateChar();
+		}
+
+		stats.CountTotal();
+		stats.CountAccuracy();
+	}
+
+	public void GenerateChar() // berfungsi untuk membuat huruf baru kembali
+	{
+		for (int i = 0; i < 7; i++)
+		{
+			generatedChar[i] = alphabet[random.Next(alphabet.Length)];
+		}
+	}
+}
